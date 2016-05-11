@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title></title>
+
+   <script>
+      /*
+      My Algorithum basically creates a 3 by 3 pixel area. And having 1/4 of canvas in between each pixel. For example point 1 is equal to (25,25). Though since that only occupies 9 of the ten turns, the tenth turn is random placement of a block. And just incase there is that 1 in thousand chance occurs that the bot places his pixel where mine was going to be. I move the pixel over by 1 in the x-axis.
+      */
+       var gm;
+       var Tiles = [];
+       var Players = [];
+       var moves = [];
+       var lastTurn = [];
+       var turn = 0;
+       var canvas;
+       var g;
+       var size = 10;
+
+       var count;
+
+       var oldX = ['n','n','n','n','n','n','n','n','n'];
+       var oldY = ['n','n','n','n','n','n','n','n','n'];
+
+       var plan = ['n','n','n','n','n'];
+
+       var Tile = function(x, y){
+           this.color = 'black';
+           this.x = x;
+           this.y = y;
+           this.claimed = 'false';
+           this.playerClaim = 'none';
+           this.closestX = 1200;
+           this.closestY = 1200;
+
+           this.claim = function(n){
+
+               this.claimed = 'true';
+               this.playerClaim = n;
+               this.color = Players[n].color;
+               var m = [];
+               m['x'] = this.x;
+               m['y'] = this.y;
+               m['player'] = n;
+               m['color'] = this.color;
+              // myHistory[count++] = m;
+
+
+
+           }
+       }
+
+       var GameSetup = function(){
+
+
+           count = 0;
+           canvas = document.getElementById('canvas');
+           g = canvas.getContext('2d');
+           canvas2 = document.getElementById('canvas2');
+           g2 = canvas2.getContext('2d');
+
+           for(var i=0;i<canvas.width;i++) {
+               Tiles[i] = [];
+               for (var j = 0; j < canvas.height; j++) {
+                   var tile = new Tile(i,j);
+                   Tiles[i].push(tile);
+
+                   g.fillStyle = 'blue';
+                   g.fillRect(i-5, j-5, 10, 10);
+               }
+           }
+
+
+
+           var dummy = new Player();
+           Players.push(dummy);
+
+           var chris = new Player2();
+           chris.color = "red";
+
+           Players.push(chris);
+
+
+           for(var i = 0; i < Players.length; i++){
+               moves[i] = [];
+
+               moves[i]['x'] = 0;
+               moves[i]['y'] = 0;
+
+           }
+           //  console.log(myHistory);
+            // nextTurn();
+
+           gm=window.setInterval(function(){nextTurn()},1);
+
+
+       }
+
+       var nextTurn = function(){
+           if(turn ==10){
+               var count0=0;
+               var count1=0;
+               for(var a2=0;a2<canvas.width;a2++){
+                   for(var b2=0;b2<canvas.width;b2++){
+
+                       if(Tiles[a2][b2].playerClaim==0)count0++;
+                       if(Tiles[a2][b2].playerClaim==1)count1++;
+
+                   }
+
+               }
+               console.log("Player 1 "+"("+Players[0].color+") Count: "+count0);
+               console.log("Player 2 "+"("+Players[1].color+") Count: "+count1);
+               clearInterval(gm);
+           }
+           if(turn<10) {
+               for (var i = 0; i < Players.length; i++) {
+
+                   move(i, Players[i].getMove());
+               }
+
+               placePlayer();
+
+               for (var ci = 0; ci < canvas.width; ci++) {
+                   for (var cj = 0; cj < canvas.height; cj++) {
+                       g.fillStyle = Tiles[ci][cj].color;
+                       g.fillRect(ci - 5, cj - 5, 10, 10);
+
+                   }
+               }
+               closestNeighbor();
+
+               turn++;
+               console.log(turn);
+           }
+       }
+
+
+       var closestNeighbor = function (){
+
+          for(var i = 0;i<Players.length;i++){
+               var a = moves[i]['x'];
+               var b = moves[i]['y'];
+             // console.log("closest"+i+" "+a+" "+b+" "+Players.length);
+
+              for(var n = 0;n<canvas.width;n++){
+                  for(var m = 0; m<canvas.width; m++){
+
+                      var c = a - Tiles[m][n].x;
+                      var d = b - Tiles[m][n].y;
+                      var x = c*c+d*d;
+                      var c2 = Tiles[m][n].closestX - Tiles[m][n].x;
+                      var d2 =  Tiles[m][n].closestY - Tiles[m][n].y;
+                      var xx = c2*c2 +d2*d2;
+                     // console.log("m" +m+"n: "+n+"a: "+a+" "+b+" "+x+ " "+xx+"***"+Tiles[m][n].closestX+" "+Tiles[m][n].closestY);
+                      if(x < xx){
+                        //  console.log("Switch");
+                          Tiles[m][n].playerClaim = i;
+                          Tiles[m][n].closestX = a;
+                          Tiles[m][n].closestY = b;
+                          Tiles[m][n].color=Players[i].color;
+                          g.fillStyle = Players[i].color;
+                          g.fillRect(m, n, 1, 1);
+
+                      }
+
+
+                  }
+
+              }
+              for(var f=0;f<canvas.width;f++){
+                  for(var e=0;e<canvas.height;e++ ){
+                     // console.log("Tile "+f+" "+e+": "+Tiles[f][e].playerClaim);
+                  }
+              }
+
+          }
+
+       }
+
+       var move = function(n,pMove){
+           moves[n]['x'] = pMove['x'];
+           moves[n]['y'] = pMove['y'];
+
+       }
+
+       var canvas2;
+       var g2;
+
+       var placePlayer = function(){
+
+           lastTurn = moves;
+           for(var i=0;i<Players.length;i++){
+               var tempX = moves[i]['x'];
+               var tempY = moves[i]['y'];
+
+               if(Tiles[tempX][tempY].claimed = 'false'){
+
+
+                   g2.fillStyle = Players[i].color;
+                   g2.fillRect(tempX,tempY,3,3);
+                   Tiles[tempX][tempY].claim(i);
+
+               }
+               else{
+                   while(Tiles[tempX][tempY].claimed = 'true'){
+                       var randX = parseInt(2 * Math.random()) - 1;
+                       var randY = parseInt(2 * Math.random()) -1;
+                       tempX = tempX + randX;
+                       tempY = tempY + randY;
+                   }
+                   g2.fillStyle = Players[i].color;
+                   g2.fillRect(tempX,tempY,3,3);
+                   Tiles[tempX][tempY].claim(i);
+
+
+               }
+           }
+           if(turn == 9) {
+               for (var i = 0; i < 100; i++) {
+                   for (var j = 0; j < 100; j++) {
+                      // console.log(Tiles[i][j].color);
+                   }
+               }
+           }
+
+       }
+
+       //*******************************************************************************
+       //*******************This is the only part of the code you need to change.*******//
+       var Player = function(){
+           this.name = "myName";//put a name here
+           this.color = 'green'; //change color to yours
+
+
+           //this function choses a random position
+           this.getMove = function(){
+
+               var myMove = [];
+               myMove['x'] = parseInt(canvas.width*Math.random());
+               myMove['y'] = parseInt(canvas.height*Math.random());
+               
+
+               /*
+               This where I have conditonals that determine whether or not if a pixel that I was going to use is taken. 'y' means that the pixel is taken.
+               */
+               	if (myMove['x'] == canvas.width*.25)
+               	{
+               	if (myMove['y'] == .25*canvas.width)
+               	{
+               		oldX[0] = 'y';
+               		oldY[0] = 'y';
+               	}
+               	else if (myMove['y'] == .5*canvas.width)
+               	{
+               		oldX[3] = 'y';
+               		oldY[3] = 'y';
+               	}
+               	else if (myMove['y'] == .75*canvas.width)
+               	{
+               		oldX[6] = 'y';
+               		oldY[6] = 'y';
+               	}
+               }
+               	
+               	if (myMove['x'] == canvas.width*.5)
+               	{
+               	if (myMove['y'] == canvas.width*.25)
+               	{
+               		oldX[1] = 'y';
+               		oldY[1] = 'y';
+               	}
+               	else if (myMove['y'] == canvas.width*.5)
+               	{
+               		oldX[4] = 'y';
+               		oldY[4] = 'y';
+               	}
+               	else if (myMove['y'] == canvas.width*.75)
+               	{
+               		oldX[7] = 'y';
+               		oldY[7] = 'y';
+               	}
+               }
+               	
+
+               	
+ 				if (myMove['x'] == canvas.width*.75)
+ 				{
+ 				if (myMove['y'] == .25*canvas.width)
+ 				{
+ 					oldX[2] = 'y';
+               		oldY[2] = 'y';
+ 				}
+ 				else if(myMove['y'] == .5*canvas.width)
+ 				{
+ 					oldX[5] = 'y';
+               		oldY[5] = 'y';
+ 				}
+ 				else if(myMove['y'] = .75*canvas.width)
+ 				{
+ 					oldX[8] = 'y';
+ 					oldY[8] = 'y';
+ 				}
+ 			}
+               	
+               
+ 			               
+               return myMove;
+           }
+
+           this.getLastTurns = function(){
+               for(var i =0;i<lastTurn.length;i++) {
+                  // console.log(lastTurn[i]);
+               }
+
+
+           }
+
+
+       }
+
+var Player2 = function(){
+           this.name = "myName";//put a name here
+           this.color = 'green'; //change color to yours
+
+
+           //this function choses a random position
+           this.getMove = function(){
+/*Here are the conditionals that dictate the placement of the pixels.
+The else statement after each conditional is if the bot already place their pixel their. And just moves the desired pixel over by one on the x-axis
+*/
+               var myMove = [];
+               if (turn == 0)
+               {
+               	console.log('test1');
+
+               		if (oldX[0] == 'n' && oldY[0] == 'n')
+               		{
+               			console.log('test');
+               		myMove['x'] = parseInt(canvas.width*.25);
+               		myMove['y'] = parseInt(canvas.width*.25);
+               
+               		}
+               		else
+               		{
+               			myMove['x'] = parseInt((canvas.width*.25)+1);
+               		myMove['y'] = parseInt(canvas.width*.25);
+               		}
+           }
+              
+
+               else if ((turn == 1))
+               {
+               	myMove['x'] = parseInt(canvas.width*.5);
+               	myMove['y'] = parseInt(canvas.width*.25);
+               	if ((oldX[1] == 'n') && (oldY[1] == 'n'))
+				{
+				myMove['x'] = parseInt((canvas.width*.5)+1);
+               	myMove['y'] = parseInt(canvas.width*.25);
+				}
+               }
+
+               else if ((turn== 2))
+               {
+               	myMove['x'] = parseInt(canvas.width*.75);
+               	myMove['y'] = parseInt(canvas.width*.25);
+               	if ((oldX[2] == 'n') && (oldY[2] == 'n'))
+               	{
+               		myMove['x'] = parseInt((canvas.width*.75)+1);
+               	myMove['y'] = parseInt(canvas.width*.25);
+               	}
+               }
+               
+               
+               else if ((turn==3 ))
+               {
+               	myMove['x'] = parseInt(canvas.width*.25);
+               	myMove['y'] = parseInt(canvas.width*.5);
+                 if ((oldX[3] == 'n' )&& (oldY == 'n'))
+                 {
+                 	myMove['x'] = parseInt((canvas.width*.25)+1);
+               	myMove['y'] = parseInt(canvas.width*.5);
+                 }
+               }
+               
+
+               else if ((turn ==4))
+               {
+               	myMove['x'] = parseInt(canvas.width*.5);
+               	myMove['y'] = parseInt(canvas.width*.5);
+               	if ((oldX[4] == 'n') && (oldY[4] == 'n'))
+               	{
+               	myMove['x'] = parseInt((canvas.width*.5)+1);
+               	myMove['y'] = parseInt(canvas.width*.5);
+               	}
+               }
+              
+
+               else if ((turn ==5))
+               {
+               	myMove['x'] = parseInt(canvas.width*.75);
+               	myMove['y'] = parseInt(canvas.width*.5);
+               	if ((oldX[5] == 'n') && (oldY[5] == 'n'))
+               	{
+               		myMove['x'] = parseInt((canvas.width*.75)+1);
+               	myMove['y'] = parseInt(canvas.width*.5);
+               	}
+               }
+               
+
+               else if ((turn == 6))
+               {
+               	myMove['x'] = parseInt(canvas.width*.25);
+               	myMove['y'] = parseInt(canvas.width*.75);
+               	if ((oldX[6] == 'n') && (oldY[6] == 'n'))
+               	{
+               	myMove['x'] = parseInt((canvas.width*.25)+1);
+               	myMove['y'] = parseInt(canvas.width*.75);
+               	}
+               	}
+
+               	else if ((turn == 7))
+               	{
+               		myMove['x'] = parseInt(canvas.width*.5);
+               		myMove['y'] = parseInt(canvas.width*.75);
+               		if ((oldX[7] == 'n') && (oldY[7] == 'n'))
+               		{
+               		myMove['x'] = parseInt((canvas.width*.5)+1);
+               		myMove['y'] = parseInt(canvas.width*.75);
+               		}
+               	}
+
+               	else if ((turn == 8))
+               	{
+               		console.log("8");
+               		myMove['x'] = parseInt(canvas.width*.75);
+               		myMove['y'] = parseInt(canvas.width*.75);
+               		if ((oldX[8] == 'n') && (oldY[8] == 'n'))
+               		{
+               		myMove['x'] = parseInt((canvas.width*.75)+1);
+               		myMove['y'] = parseInt(canvas.width*.75);
+               		}
+               	}
+
+               else
+               {
+               	  myMove['x'] = parseInt(canvas.width*Math.random());
+                  myMove['y'] = parseInt(canvas.height*Math.random());
+               }
+               
+               	
+               
+ 			               
+               return myMove;
+           }
+          
+
+
+       }
+
+
+
+
+
+   </script>
+</head>
+
+
+
+
+<body onload="GameSetup()">
+<span>Voroni Diagrams</span><p>
+   A Voroni diagram is a partitioning of a plan based on a nearest neighbor calculation.
+   In this game, each player will be given 10 tokens.  Each round consists of the player placing a token.
+   The game board will then divide up that plane based on which player token is closest to that pixel cell.
+   The winner will have the most pixels.
+</p>
+
+
+<div style="width: 400px;margin: 0 auto">
+   <canvas id=canvas height=100 width=100></canvas>
+</div>
+
+<div style="width: 400px;margin: 0 auto">
+   <canvas id=canvas2 height=100 width =100></canvas>
+</div>
+
+<p id="stuff"></p>
+</body>
+
+
+
+</html>
