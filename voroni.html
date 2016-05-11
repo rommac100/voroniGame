@@ -20,6 +20,7 @@
 
        var count;
 
+       //The variables for which are part of my alg that decides if a pixel is taken.
        var oldX = ['n','n','n','n','n','n','n','n','n'];
        var oldY = ['n','n','n','n','n','n','n','n','n'];
 
@@ -193,7 +194,7 @@
            lastTurn = moves;
            for(var i=0;i<Players.length;i++){
                var tempX = moves[i]['x'];
-               var tempY = moves[i]['y'];
+               var tempY = moves[i]['y'];https://github.com/rommac100/voroniGame
 
                if(Tiles[tempX][tempY].claimed = 'false'){
 
@@ -330,14 +331,15 @@ var Player2 = function(){
 /*Here are the conditionals that dictate the placement of the pixels.
 The else statement after each conditional is if the bot already place their pixel their. And just moves the desired pixel over by one on the x-axis
 */
+/*
+The placement of blocks goes in this order: (.25,.25), (.5,.25), (.75,.25), (.25,.5), (.5,.5), (.75,.5), (.25,.75), (.5,.75), (.75,.75). Add i
+*/
                var myMove = [];
                if (turn == 0)
                {
-               	console.log('test1');
 
                		if (oldX[0] == 'n' && oldY[0] == 'n')
                		{
-               			console.log('test');
                		myMove['x'] = parseInt(canvas.width*.25);
                		myMove['y'] = parseInt(canvas.width*.25);
                
